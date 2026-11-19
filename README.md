@@ -1,10 +1,10 @@
 # PropReel
 
-Paste a Property Finder, Bayut or dubizzle link and get a 1080×1920 listing video for Instagram Reels, TikTok and YouTube Shorts. Works on phones and computers.
+Paste a property listing link and get a 1080×1920 listing video for Instagram Reels, TikTok and YouTube Shorts. Works on phones and computers.
 
 No AI, no API keys, no subscription. Video is rendered on the user's own device.
 
-**Live demo:** _add your Vercel link here_
+**Live demo:** https://propreel-sigma.vercel.app
 
 ## How it works
 
@@ -17,7 +17,7 @@ No AI, no API keys, no subscription. Video is rendered on the user's own device.
 4. **Style.** Six themes or custom brand colours, seconds per photo, closing line.
 5. **Make video.** Full-screen photo scenes are drawn frame by frame on a `<canvas>` (slow push-in motion, spring-eased text kept inside the Reels/TikTok safe area, cross-fades) and recorded with `MediaRecorder` as H.264 MP4 (WebM on Firefox). On phones, **Save / share** opens the share sheet so the video can go straight to Photos, WhatsApp or Instagram.
 
-If a portal blocks the server, there are two fallbacks: the **Import button** (a bookmarklet that runs the same extractor on the page open in the user's own browser) and **paste the listing text**.
+**Which portals import how:** Property Finder links import directly. Bayut and dubizzle block requests from cloud servers, so for those the app sends you to two fallbacks: the **Import button** (a bookmarklet that runs the same extractor on the page open in the user's own browser) and **paste the listing text**.
 
 ## Project layout
 

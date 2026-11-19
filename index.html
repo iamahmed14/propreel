@@ -162,7 +162,7 @@
         <button class="primary" id="linkBtn" type="submit">Import listing</button>
       </form>
       <div class="msg" id="linkMsg"></div>
-      <div class="works">Works with Property Finder, Bayut, dubizzle and most listing sites. Or fill in the details below yourself.</div>
+      <div class="works">Property Finder links import directly. For Bayut and dubizzle, use the Import button below. Or fill in the details yourself.</div>
 
       <details class="more" id="textBox">
         <summary>No link? Paste the listing text</summary>
@@ -361,6 +361,11 @@ $("linkForm").onsubmit = async (e) => {
   const url = cleanLink($("link").value), msg = $("linkMsg");
   if (!url) { msg.className = "msg err"; msg.textContent = "Paste a full link that starts with https://"; return; }
   $("link").value = url;
+  // Bayut and dubizzle block requests from cloud servers, so don't make the user wait for a refusal.
+  if (/(^|\.)(bayut|dubizzle)\./i.test(new URL(url).hostname)) {
+    showFallback(msg, "Bayut and dubizzle don't allow link import.");
+    return;
+  }
   $("linkBtn").disabled = true; $("linkBtn").innerHTML = '<span class="spinner"></span>Importing…';
   msg.className = "msg"; msg.textContent = "";
   try {
