@@ -5,7 +5,7 @@
   "description": "Property listing to vertical video, in the browser. No AI, no subscription.",
   "license": "MIT",
   "scripts": {
-    "build": "esbuild extract.js --minify --outfile=extract.min.js",
+    "minify": "npx esbuild extract.js --minify --outfile=extract.min.js",
     "test": "node test/extract.test.js"
   },
   "engines": { "node": ">=18" }

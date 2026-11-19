@@ -25,7 +25,7 @@ If a portal blocks the server, there are two fallbacks: the **Import button** (a
 | --- | --- |
 | `index.html` | The app: mobile-first UI, canvas renderer, recorder |
 | `extract.js` | Listing extractor shared by the API, the app and the bookmarklet |
-| `extract.min.js` | Minified copy embedded in the bookmarklet (`npm run build`) |
+| `extract.min.js` | Minified copy embedded in the bookmarklet (`npm run minify`) |
 | `api/listing.js` | `GET /api/listing?url=…` fetches a listing page and returns clean JSON |
 | `api/image.js` | `GET /api/image?url=…` same-origin photo proxy |
 | `dev.js` | Local server that runs the app and both API routes |
