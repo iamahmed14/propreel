@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>PropReel · Turn property listings into Reels</title>
+<meta name="description" content="Paste a Property Finder, Bayut or dubizzle link and get a 9:16 listing video for Reels, TikTok and Shorts. Free, no AI, no subscription.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef; --panel: #fff; --ink: #17202a; --muted: #69707a; --line: #e2e0d9; --soft: #f6f5f1;
+    --brand: #0f1b2d; --accent: #c99a2e; --warn-bg: #fff5d1; --warn-line: #e5c051; --ok: #2f7d4f; --err: #b3261e;
+    --radius: 14px; --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px); --hdr: 64px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body { font-family: "DM Sans", system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.45; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  /* 16px inputs stop iOS Safari from zooming in on focus */
+  input[type=text], input[type=tel], select, textarea {
+    width: 100%; font-size: 16px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; min-height: 46px;
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: 0; border-color: transparent; }
+  button { cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 11px 16px; font-weight: 600; min-height: 46px; }
+  button.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  a { color: var(--brand); }
+
+  /* header */
+  header.top { position: sticky; top: 0; z-index: 30; background: var(--panel); border-bottom: 1px solid var(--line); padding: calc(10px + var(--safe-t)) 16px 10px; }
+  .brandrow { display: flex; align-items: center; gap: 10px; max-width: 1180px; margin: 0 auto; }
+  .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--brand); display: grid; place-items: center; flex: none; }
+  .mark svg { width: 13px; height: 13px; margin-left: 2px; }
+  .logo { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: var(--brand); line-height: 1.1; }
+  .logo span { color: var(--accent); }
+  .tag { color: var(--muted); font-size: 13px; }
+
+  /* layout */
+  .layout { display: grid; grid-template-columns: 1fr; max-width: 1180px; margin: 0 auto; }
+  .main { padding: 16px 16px 0; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 14px; scroll-margin-top: calc(var(--hdr) + 12px); }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+  .card h2 { margin: 0 0 4px; font-size: 19px; }
+  .hint { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+  .small { font-size: 13px; color: var(--muted); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .stack { display: grid; gap: 10px; }
+  .msg { margin-top: 10px; font-size: 14px; }
+  .msg:empty { display: none; }
+  .msg.err { color: var(--err); } .msg.ok { color: var(--ok); }
+  .works { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  details.more { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+  details.more > summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.more > summary::-webkit-details-marker { display: none; }
+  details.more > summary::after { content: "+"; font-size: 20px; color: var(--muted); }
+  details.more[open] > summary::after { content: "–"; }
+  details.more[open] > summary { margin-bottom: 10px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* fields */
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fields .wide { grid-column: 1 / -1; }
+  label.f { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .needs-check input, .needs-check textarea, .needs-check select { background: var(--warn-bg); border-color: var(--warn-line); }
+  .source { font-size: 14px; margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #eef5f0; color: #245c3b; }
+
+  /* photos */
+  .sel-list { display: grid; gap: 10px; }
+  .sel { display: grid; grid-template-columns: 70px 1fr; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 8px; background: #fff; }
+  .sel .thumb { position: relative; width: 70px; height: 92px; border-radius: 8px; overflow: hidden; background: #ddd; }
+  .sel .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sel .thumb .badge { position: absolute; left: 4px; top: 4px; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; }
+  .sel .meta { display: grid; gap: 6px; min-width: 0; }
+  .sel .role { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .sel .meta input { min-height: 40px; padding: 8px 10px; }
+  .sel .tools { display: flex; gap: 6px; }
+  .sel .tools button { min-height: 34px; padding: 4px 12px; font-size: 14px; }
+  .sel.bad { border-color: #e6b3ae; background: #fff6f5; }
+  .grid-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+  .pick { position: relative; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; border: 2px solid transparent; padding: 0; min-height: 0; background: #ddd; }
+  .pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pick.on { border-color: var(--brand); }
+  .pick .tick { position: absolute; right: 5px; top: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.88); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--brand); }
+  .pick.on .tick { background: var(--brand); color: #fff; }
+  .upload { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 10px; padding: 11px 16px; font-weight: 600; background: #fff; min-height: 46px; cursor: pointer; }
+  .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .subhead { font-size: 14px; font-weight: 700; margin: 18px 0 8px; }
+
+  /* style */
+  .themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .theme { display: flex; gap: 8px; align-items: center; justify-content: flex-start; padding: 10px; font-size: 14px; }
+  .theme.on { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+  .dots { display: flex; }
+  .dots i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); margin-right: -4px; }
+  .swatches { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .swatches label { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+  .swatches input[type=color] { width: 42px; height: 34px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: #fff; }
+
+  /* bottom bar */
+  .actionbar { position: sticky; bottom: 0; z-index: 15; display: flex; gap: 8px; padding: 10px 16px calc(10px + var(--safe-b)); background: rgba(244,243,239,.94); backdrop-filter: blur(8px); border-top: 1px solid var(--line); margin: 0 -16px; }
+  .actionbar .primary { flex: 1; }
+
+  /* preview: full-screen sheet on phones, sticky panel on desktop */
+  .preview { position: fixed; inset: 0; z-index: 50; background: #0d0f12; color: #eee; display: none; flex-direction: column; padding: calc(10px + var(--safe-t)) 14px calc(14px + var(--safe-b)); }
+  .preview.open { display: flex; }
+  .pv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .pv-head strong { font-size: 15px; }
+  .pv-close { background: #23262b; border-color: #333; color: #fff; min-height: 38px; padding: 6px 14px; }
+  .canvas-wrap { flex: 1; min-height: 0; position: relative; }
+  canvas#view { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 10px; background: #000; display: block; }
+  .controls { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  .controls input[type=range] { flex: 1; accent-color: var(--accent); }
+  .controls button { background: #23262b; color: #fff; border-color: #333; min-width: 74px; }
+  .time { color: #aaa; font-size: 12px; font-variant-numeric: tabular-nums; min-width: 72px; text-align: right; }
+  .progress { height: 6px; background: #2a2d31; border-radius: 3px; overflow: hidden; margin-top: 10px; display: none; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+  .status { color: #ccc; font-size: 13px; margin-top: 8px; }
+  .status:empty { display: none; }
+  .result { display: none; gap: 8px; margin-top: 8px; }
+  .result.show { display: flex; }
+  .result button { flex: 1; background: var(--accent); color: #111; border-color: var(--accent); }
+  .result button.alt { background: #23262b; color: #fff; border-color: #333; }
+
+  @media (min-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; padding: 0 24px; }
+    .main { padding: 20px 0 0; }
+    .card { padding: 22px; }
+    .preview { position: sticky; inset: auto; top: calc(var(--hdr) + 20px); align-self: start; z-index: 5; display: flex; height: calc(100vh - var(--hdr) - 40px); max-height: 860px; border-radius: var(--radius); margin-top: 20px; padding: 14px; }
+    .pv-close, #pvBtn { display: none !important; }
+    .actionbar { margin: 0; border-radius: var(--radius) var(--radius) 0 0; }
+    header.top { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (max-width: 380px) { .fields { grid-template-columns: 1fr; } .tag { display: none; } }
+  body.sheet-open { overflow: hidden; }
+</style>
+</head>
+<body>
+<header class="top" id="hdr">
+  <div class="brandrow">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 12 14"><path d="M0 0v14l12-7z" fill="#fff"/></svg></div>
+    <div>
+      <h1 class="logo">Prop<span>Reel</span></h1>
+      <div class="tag">Turn your property listings into Reels</div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="main">
+
+    <section class="card" id="sec-import">
+      <div class="eyebrow">Step 1</div>
+      <h2>Paste a listing link</h2>
+      <p class="hint">We'll pull the price, size, rooms, location, agent and photos.</p>
+      <form id="linkForm" class="stack" autocomplete="off">
+        <input type="text" id="link" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="Property Finder, Bayut or dubizzle link" enterkeyhint="go">
+        <button class="primary" id="linkBtn" type="submit">Import listing</button>
+      </form>
+      <div class="msg" id="linkMsg"></div>
+      <div class="works">Works with Property Finder, Bayut, dubizzle and most listing sites. Or fill in the details below yourself.</div>
+
+      <details class="more" id="textBox">
+        <summary>No link? Paste the listing text</summary>
+        <textarea id="paste" placeholder="Paste the description from WhatsApp, email or the portal…"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="parseBtn" type="button">Fill from text</button>
+          <button id="sampleBtn" type="button">Try a sample</button>
+        </div>
+        <div class="msg" id="textMsg"></div>
+      </details>
+
+      <details class="more" id="bmBox" hidden>
+        <summary>Import button for your browser</summary>
+        <p class="hint">If a portal blocks link import, open the listing in your own browser and tap this button. It reads the page you're looking at and sends it here.</p>
+        <p class="small"><b>Computer:</b> drag this to your bookmarks bar: <a id="bmLink" href="#" style="display:inline-block;padding:6px 12px;border-radius:8px;background:var(--brand);color:#fff;text-decoration:none;font-weight:600">＋ PropReel</a></p>
+        <p class="small"><b>Phone:</b> bookmark any page, edit the bookmark and replace its address with the copied code. On a listing, type "PropReel" in the address bar and tap the bookmark.</p>
+        <button id="bmCopy" type="button">Copy button code</button>
+        <div class="msg" id="bmMsg"></div>
+      </details>
+    </section>
+
+    <section class="card" id="sec-details">
+      <div class="eyebrow">Step 2</div>
+      <h2>Check the details</h2>
+      <p class="hint">Yellow fields were filled in automatically. Fix anything that's wrong.</p>
+      <div class="source" id="sourceBox" hidden></div>
+      <div class="fields">
+        <div data-k="status"><label class="f" for="status">Status</label>
+          <select id="status"><option>FOR RENT</option><option>FOR SALE</option><option>JUST LISTED</option><option>OFF-PLAN</option><option>SOLD</option><option>RENTED</option><option value="">(don't show)</option></select></div>
+        <div data-k="type"><label class="f" for="type">Type</label><input type="text" id="type" placeholder="Apartment"></div>
+        <div data-k="building" class="wide"><label class="f" for="building">Building / project</label><input type="text" id="building" placeholder="Marina Gate 2"></div>
+        <div data-k="area" class="wide"><label class="f" for="area">Area</label><input type="text" id="area" placeholder="Dubai Marina"></div>
+        <div data-k="price"><label class="f" for="price">Price</label><input type="text" id="price" inputmode="decimal" placeholder="AED 1,250,000"></div>
+        <div data-k="pricePer"><label class="f" for="pricePer">Per</label>
+          <select id="pricePer"><option value="">(none)</option><option value="/ year">/ year</option><option value="/ month">/ month</option><option value="/ week">/ week</option><option value="/ night">/ night</option></select></div>
+        <div data-k="beds"><label class="f" for="beds">Bedrooms</label><input type="text" id="beds" placeholder="2 or Studio"></div>
+        <div data-k="baths"><label class="f" for="baths">Bathrooms</label><input type="text" id="baths" inputmode="numeric"></div>
+        <div data-k="sqft" class="wide"><label class="f" for="sqft">Size (sq ft)</label><input type="text" id="sqft" inputmode="numeric"></div>
+        <div data-k="features" class="wide"><label class="f" for="features">Features (one per line, up to 8)</label><textarea id="features" rows="6"></textarea></div>
+        <div data-k="agent"><label class="f" for="agent">Agent</label><input type="text" id="agent"></div>
+        <div data-k="agency"><label class="f" for="agency">Agency</label><input type="text" id="agency"></div>
+        <div data-k="phone" class="wide"><label class="f" for="phone">Phone / WhatsApp</label><input type="tel" id="phone"></div>
+      </div>
+    </section>
+
+    <section class="card" id="sec-photos">
+      <div class="eyebrow">Step 3</div>
+      <h2>Photos</h2>
+      <p class="hint">The first photo shows the building, location and price. The second shows beds, baths and size. The rest show the building and price, or your own caption if you add one.</p>
+      <div class="sel-list" id="selList"></div>
+      <div class="row" style="margin-top:12px">
+        <label class="upload">＋ Add photos<input type="file" id="files" accept="image/*" multiple></label>
+        <span class="small" id="selCount"></span>
+      </div>
+      <div class="msg" id="photoMsg"></div>
+      <div id="poolBox" hidden>
+        <div class="subhead">From the listing <span class="small" style="font-weight:400">· tap to add or remove, up to 8</span></div>
+        <div class="grid-pick" id="pool"></div>
+      </div>
+    </section>
+
+    <section class="card" id="sec-style">
+      <div class="eyebrow">Step 4</div>
+      <h2>Look</h2>
+      <div class="themes" id="themes"></div>
+      <div class="swatches" style="margin-top:12px">
+        <label>Background <input type="color" id="cBg"></label>
+        <label>Accent <input type="color" id="cAccent"></label>
+        <label>Text <input type="color" id="cText"></label>
+      </div>
+      <div class="fields" style="margin-top:14px">
+        <div><label class="f" for="secs">Seconds per photo</label>
+          <select id="secs"><option>2.5</option><option>3</option><option selected>3.5</option><option>4</option><option>5</option></select></div>
+        <div><label class="f" for="length">Video length</label><input type="text" id="length" readonly tabindex="-1"></div>
+        <div class="wide"><label class="f" for="cta">Closing line (use | for a second line)</label><input type="text" id="cta" value="BOOK YOUR|PRIVATE VIEWING"></div>
+        <div class="wide"><label class="f" for="credit">Credit line (optional)</label><input type="text" id="credit" placeholder="Video by …"></div>
+      </div>
+    </section>
+
+    <div class="actionbar">
+      <button id="pvBtn" type="button">▶ Preview</button>
+      <button id="makeBtn" type="button" class="primary">Make video</button>
+    </div>
+  </div>
+
+  <aside class="preview" id="preview" aria-label="Video preview">
+    <div class="pv-head"><strong>Preview</strong><button class="pv-close" id="pvClose" type="button">Done</button></div>
+    <div class="canvas-wrap"><canvas id="view" width="720" height="1280"></canvas></div>
+    <div class="controls">
+      <button id="playBtn" type="button">Play</button>
+      <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Scrub">
+      <span class="time" id="time">0.0 / 0.0s</span>
+    </div>
+    <div class="progress" id="prog"><div></div></div>
+    <div class="status" id="status"></div>
+    <div class="result" id="result"><button id="shareBtn" type="button">Save / share</button><button id="dlBtn" type="button" class="alt">Download</button></div>
+  </aside>
+</div>
+
+<script src="extract.js"></script>
+<script>
+"use strict";
+/* ==========================================================================
+   PropReel. Import a listing → check details → pick photos → render on a
+   <canvas> → record with MediaRecorder. Everything runs on the user's device;
+   the only server pieces are /api/listing and /api/image, which fetch public
+   listing pages and photos the browser itself isn't allowed to read.
+   ========================================================================== */
+
+const W = 1080, H = 1920, FPS = 30, FADE = 12, MAX_PHOTOS = 8;
+const $ = (id) => document.getElementById(id);
+const isDesktop = () => matchMedia("(min-width: 900px)").matches;
+
+const THEMES = {
+  midnight: { name: "Midnight", bg: "#0f1b2d", accent: "#e3b448", text: "#f5f1e8" },
+  forest:   { name: "Forest", bg: "#1e3a2f", accent: "#c8f169", text: "#f4f1e8" },
+  sand:     { name: "Sand", bg: "#3b2a1e", accent: "#f0c48a", text: "#fbf5ec" },
+  marine:   { name: "Marine", bg: "#0b2a3a", accent: "#5fd4d0", text: "#f1f7f8" },
+  mono:     { name: "Mono", bg: "#121212", accent: "#ffffff", text: "#f2f2f2" },
+  ivory:    { name: "Ivory", bg: "#f5f1e8", accent: "#9b6b2f", text: "#1d1a16" },
+};
+const FIELD_IDS = ["status", "building", "area", "price", "pricePer", "type", "beds", "baths", "sqft", "features", "agent", "agency", "phone", "cta"];
+
+/* ------------------------------ state ------------------------------ */
+// photo: { key, src (for canvas), thumb (for <img>), direct, img, state: 'loading'|'ok'|'error', caption, own }
+const selected = [];
+let pool = [];
+let themeName = "midnight";
+
+function scrollToSection(id) {
+  const el = $(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ------------------------------ preview sheet (phones) ------------------------------ */
+function openPreview() { $("preview").classList.add("open"); document.body.classList.add("sheet-open"); fitCanvas(); refresh(); }
+function closePreview() { if (recording) return; $("preview").classList.remove("open"); document.body.classList.remove("sheet-open"); setPlaying(false); }
+$("pvBtn").onclick = () => { openPreview(); setPlaying(true); };
+$("pvClose").onclick = closePreview;
+$("makeBtn").onclick = () => { if (!isDesktop()) openPreview(); exportVideo(); };
+
+function fitCanvas() {
+  const box = document.querySelector(".canvas-wrap").getBoundingClientRect();
+  if (!box.width || !box.height) return;
+  const h = Math.min(box.height, box.width * 16 / 9);
+  view.style.height = h + "px"; view.style.width = (h * 9 / 16) + "px";
+}
+
+/* ------------------------------ details ------------------------------ */
+function setNeedsCheck(k, on) {
+  const box = document.querySelector(`[data-k="${k}"]`);
+  if (box) box.classList.toggle("needs-check", on);
+}
+function fmtMoney(cur, n) { return `${cur || "AED"} ${Math.round(n).toLocaleString("en-US")}`; }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function applyListing(d) {
+  const map = {
+    status: d.status || "", building: d.building || "", area: d.area || "",
+    price: d.price ? fmtMoney(d.currency, d.price) : "", pricePer: d.period ? `/ ${d.period}` : "",
+    type: d.type || "", beds: d.beds != null ? String(d.beds) : "", baths: d.baths != null ? String(d.baths) : "",
+    sqft: d.sqft ? Number(d.sqft).toLocaleString("en-US") : "", features: (d.features || []).join("\n"),
+    agent: d.agent || "", agency: d.agency || "", phone: d.phone || "",
+  };
+  FIELD_IDS.forEach((k) => setNeedsCheck(k, false));
+  let filled = 0;
+  for (const k in map) {
+    if (!map[k]) continue;
+    const el = $(k);
+    if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === map[k] || o.text === map[k])) continue;
+    el.value = map[k]; setNeedsCheck(k, true); filled++;
+  }
+  const box = $("sourceBox");
+  if (d.url) {
+    box.hidden = false;
+    box.innerHTML = `✓ Imported from ${escapeHtml(d.source || "the listing")} · <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener">open listing</a>`;
+  } else box.hidden = true;
+  refresh(); saveDraft();
+  return filled;
+}
+
+/* ------------------------------ import: link ------------------------------ */
+function cleanLink(raw) {
+  const m = String(raw).match(/https?:\/\/[^\s"'<>]+/i); // shared text often wraps the URL in a sentence
+  return m ? m[0].replace(/[).,]+$/, "") : "";
+}
+function showFallback(msgEl, lead) {
+  const hasButton = !$("bmBox").hidden;
+  msgEl.className = "msg err";
+  msgEl.innerHTML = `${lead} ${hasButton ? "Use the <b>Import button for your browser</b> below, or paste the listing text." : "Paste the listing text below instead."}`;
+  if (hasButton) $("bmBox").open = true;
+  $("textBox").open = true;
+}
+$("linkForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const url = cleanLink($("link").value), msg = $("linkMsg");
+  if (!url) { msg.className = "msg err"; msg.textContent = "Paste a full link that starts with https://"; return; }
+  $("link").value = url;
+  $("linkBtn").disabled = true; $("linkBtn").innerHTML = '<span class="spinner"></span>Importing…';
+  msg.className = "msg"; msg.textContent = "";
+  try {
+    const r = await fetch(`api/listing?url=${encodeURIComponent(url)}`, { headers: { accept: "application/json" } });
+    if (!(r.headers.get("content-type") || "").includes("json")) throw Object.assign(new Error("no_server"), { code: "no_server" });
+    const d = await r.json();
+    if (!r.ok) throw Object.assign(new Error(d.error || "failed"), { code: d.error });
+    const n = applyListing(d);
+    setPool(d.photos.map((src, i) => ({ key: "l" + i, src, thumb: (d.photosOriginal || [])[i] || src })), true);
+    msg.className = "msg ok"; msg.textContent = `Found ${n} details and ${d.photos.length} photos.`;
+    setTimeout(() => scrollToSection("sec-details"), 400);
+  } catch (err) {
+    showFallback(msg, {
+      blocked: "That portal blocked the import right now.",
+      no_listing: "Couldn't find listing details on that page. Is it a single listing, not a search page?",
+      fetch_failed: "Couldn't reach that page.",
+      no_server: "Link import only works on the hosted version of PropReel.",
+    }[err.code] || "Import failed.");
+  } finally {
+    $("linkBtn").disabled = false; $("linkBtn").textContent = "Import listing";
+  }
+};
+
+/* ------------------------------ import: text ------------------------------ */
+$("parseBtn").onclick = () => {
+  const n = applyListing(ListingExtract.fromText($("paste").value));
+  $("textMsg").className = n ? "msg ok" : "msg err";
+  $("textMsg").textContent = n ? `Filled ${n} details.` : "Couldn't recognise any details. Type them in below.";
+  if (n) setTimeout(() => scrollToSection("sec-details"), 400);
+};
+const SAMPLE = `FOR RENT | Spacious 1 Bedroom Apartment in Marina Gate 2, Dubai Marina
+AED 115,000 per year | 4 cheques
+1 Bed | 2 Baths | 812 sq ft
+- Full marina view from a large balcony
+- Built-in wardrobes, chiller free
+- Shared pool, gym and kids play area
+- Covered parking, 24/7 security
+Agent: Sara Malik | Agency: Harbour Line Real Estate
+Call +971 50 123 4567`;
+$("sampleBtn").onclick = () => { $("paste").value = SAMPLE; $("parseBtn").click(); };
+
+/* ------------------------------ import: bookmarklet ------------------------------ */
+// Carries extract.min.js, runs it on the listing page the user has open, and
+// comes back here with the result in the URL hash.
+(async function setupBookmarklet() {
+  if (!/^https?:$/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
+  try {
+    const r = await fetch("extract.min.js");
+    if (!r.ok) return;
+    const src = await r.text();
+    const app = location.origin + location.pathname;
+    const code = `(function(){${src};var d=ListingExtract.fromDocument(document);delete d.description;` +
+      `if(!d.found){alert('PropReel: no listing found on this page');return}` +
+      `location.href=${JSON.stringify(app)}+'#import='+encodeURIComponent(JSON.stringify(d))})()`;
+    const href = "javascript:" + encodeURIComponent(code);
+    $("bmLink").href = href;
+    $("bmLink").onclick = (e) => { e.preventDefault(); $("bmMsg").className = "msg"; $("bmMsg").textContent = "Drag it to your bookmarks bar, then click it on a listing page."; };
+    $("bmCopy").onclick = async () => {
+      try { await navigator.clipboard.writeText(href); $("bmMsg").className = "msg ok"; $("bmMsg").textContent = "Copied. Paste it as the address of a new bookmark."; }
+      catch { $("bmMsg").className = "msg err"; $("bmMsg").textContent = "Couldn't copy here. Long-press the button above and copy its link instead."; }
+    };
+    $("bmBox").hidden = false;
+  } catch {}
+})();
+
+function importFromHash() {
+  if (!location.hash.startsWith("#import=")) return;
+  try {
+    const d = JSON.parse(decodeURIComponent(location.hash.slice(8)));
+    history.replaceState(null, "", location.pathname + location.search);
+    const n = applyListing(d);
+    setPool((d.photos || []).map((u, i) => ({ key: "b" + i, thumb: u, src: `api/image?url=${encodeURIComponent(u)}`, direct: u })), true);
+    $("linkMsg").className = "msg ok"; $("linkMsg").textContent = `Imported ${n} details and ${(d.photos || []).length} photos.`;
+    setTimeout(() => scrollToSection("sec-details"), 300);
+  } catch {
+    $("linkMsg").className = "msg err"; $("linkMsg").textContent = "That import couldn't be read. Try again from the listing page.";
+  }
+}
+
+/* ------------------------------ photos ------------------------------ */
+function loadImage(src, cross) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (cross) img.crossOrigin = "anonymous";
+    img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => resolve(img));
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+async function loadForCanvas(p) {
+  p.state = "loading"; renderSelected();
+  for (const s of [p.src, p.direct].filter(Boolean)) {
+    try { p.img = await loadImage(s, !s.startsWith("blob:") && !s.startsWith("data:")); p.state = "ok"; renderSelected(); refresh(); return; } catch {}
+  }
+  p.state = "error"; renderSelected(); refresh();
+  $("photoMsg").className = "msg err";
+  $("photoMsg").textContent = "Some listing photos couldn't be loaded here. Save them from the listing and add them with “Add photos”.";
+}
+function setPool(list, autoSelect) {
+  pool = list;
+  $("poolBox").hidden = !pool.length;
+  for (let i = selected.length - 1; i >= 0; i--) if (!selected[i].own) selected.splice(i, 1);
+  if (autoSelect) pool.slice(0, Math.max(0, Math.min(6, MAX_PHOTOS - selected.length))).forEach(addFromPool);
+  renderPool(); renderSelected(); refresh();
+}
+function addFromPool(item) {
+  if (selected.length >= MAX_PHOTOS || selected.some((p) => p.key === item.key)) return;
+  const p = { key: item.key, src: item.src, thumb: item.thumb, direct: item.direct, state: "loading", caption: "" };
+  selected.push(p); loadForCanvas(p);
+}
+function renderPool() {
+  const box = $("pool"); box.innerHTML = "";
+  pool.forEach((item) => {
+    const idx = selected.findIndex((p) => p.key === item.key);
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pick" + (idx >= 0 ? " on" : "");
+    b.innerHTML = `<img loading="lazy" alt="" referrerpolicy="no-referrer"><span class="tick">${idx >= 0 ? idx + 1 : "+"}</span>`;
+    b.querySelector("img").src = item.thumb;
+    b.onclick = () => {
+      const i = selected.findIndex((p) => p.key === item.key);
+      if (i >= 0) selected.splice(i, 1);
+      else if (selected.length >= MAX_PHOTOS) { $("photoMsg").className = "msg err"; $("photoMsg").textContent = `Up to ${MAX_PHOTOS} photos. Remove one first.`; return; }
+      else addFromPool(item);
+      renderPool(); renderSelected(); refresh();
+    };
+    box.appendChild(b);
+  });
+}
+function renderSelected() {
+  const box = $("selList"); box.innerHTML = "";
+  if (!selected.length) box.innerHTML = '<p class="small" style="margin:0">No photos yet. Import a listing or add your own.</p>';
+  selected.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "sel" + (p.state === "error" ? " bad" : "");
+    const role = i === 0 ? "Opening shot · building, location, price" : i === 1 ? "Beds, baths and size" : "";
+    const state = p.state === "loading" ? '<span class="small"><span class="spinner"></span>Loading…</span>'
+      : p.state === "error" ? '<span class="small" style="color:var(--err)">Couldn\'t load. Remove it or add it from your device.</span>' : "";
+    el.innerHTML = `<div class="thumb"><img alt="" referrerpolicy="no-referrer"><span class="badge">${i + 1}</span></div>
+      <div class="meta">${role ? `<div class="role">${role}</div>` : `<input type="text" data-caption placeholder="Caption (optional)" aria-label="Caption" maxlength="60">`}
+        ${state}
+        <div class="tools"><button type="button" data-a="up" aria-label="Move up">↑</button><button type="button" data-a="down" aria-label="Move down">↓</button><button type="button" data-a="del">Remove</button></div>
+      </div>`;
+    const ti = el.querySelector(".thumb img");
+    ti.onerror = () => { if (ti.src !== new URL(p.src, location.href).href) ti.src = p.src; };
+    ti.src = p.thumb || p.src;
+    const cap = el.querySelector("input[data-caption]");
+    if (cap) { cap.value = p.caption || ""; cap.oninput = () => { p.caption = cap.value; refresh(); }; }
+    el.querySelectorAll("button[data-a]").forEach((b) => (b.onclick = () => {
+      const a = b.dataset.a;
+      if (a === "del") { if (p.own) URL.revokeObjectURL(p.src); selected.splice(i, 1); }
+      if (a === "up" && i > 0) [selected[i - 1], selected[i]] = [selected[i], selected[i - 1]];
+      if (a === "down" && i < selected.length - 1) [selected[i + 1], selected[i]] = [selected[i], selected[i + 1]];
+      renderSelected(); renderPool(); refresh();
+    }));
+    box.appendChild(el);
+  });
+  $("selCount").textContent = `${selected.length} / ${MAX_PHOTOS}`;
+}
+$("files").onchange = async (e) => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  for (const file of files) {
+    if (selected.length >= MAX_PHOTOS) { $("photoMsg").className = "msg err"; $("photoMsg").textContent = `Up to ${MAX_PHOTOS} photos.`; break; }
+    const url = URL.createObjectURL(file);
+    const p = { key: "u" + Math.random().toString(36).slice(2), src: url, thumb: url, own: true, state: "loading", caption: "" };
+    selected.push(p);
+    try { p.img = await loadImage(url, false); p.state = "ok"; } catch { p.state = "error"; }
+  }
+  renderSelected(); renderPool(); refresh();
+};
+
+/* ------------------------------ look ------------------------------ */
+function renderThemes() {
+  const box = $("themes"); box.innerHTML = "";
+  Object.entries(THEMES).forEach(([k, t]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "theme" + (k === themeName ? " on" : "");
+    b.innerHTML = `<span class="dots"><i style="background:${t.bg}"></i><i style="background:${t.accent}"></i><i style="background:${t.text}"></i></span>${t.name}`;
+    b.onclick = () => applyTheme(k);
+    box.appendChild(b);
+  });
+}
+function applyTheme(k) {
+  const t = THEMES[k]; if (!t) return;
+  themeName = k; $("cBg").value = t.bg; $("cAccent").value = t.accent; $("cText").value = t.text;
+  renderThemes(); refresh(); saveDraft();
+}
+["cBg", "cAccent", "cText"].forEach((k) => $(k).addEventListener("input", () => { themeName = "custom"; renderThemes(); refresh(); saveDraft(); }));
+
+function data() {
+  const d = {};
+  for (const k of FIELD_IDS) d[k] = $(k).value.trim();
+  d.features = d.features.split("\n").map((s) => s.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 8);
+  d.theme = { bg: $("cBg").value, accent: $("cAccent").value, text: $("cText").value };
+  d.credit = $("credit").value.trim();
+  d.secs = parseFloat($("secs").value) || 3.5;
+  return d;
+}
+
+/* ============================== RENDERER ============================== */
+// Text stays inside a "safe area" so Instagram / TikTok buttons don't cover it:
+// clear of the right-hand icon column and above the bottom caption area.
+const SAFE_L = 70, SAFE_W = 840, SAFE_BOTTOM = 1560;
+const ease = (f, delay = 0) => { const t = Math.max(0, f - delay) / FPS, w = 10; return t <= 0 ? 0 : 1 - (1 + w * t) * Math.exp(-w * t); };
+const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+const BEBAS = '"Bebas Neue", Impact, "Arial Narrow", sans-serif';
+const DM = '"DM Sans", system-ui, sans-serif';
+function setFont(ctx, size, family, weight = "") { ctx.font = `${weight} ${size}px ${family}`.trim(); }
+function spacing(ctx, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; }
+function fitSize(ctx, text, size, min, maxW, family, weight = "") {
+  let s = size; setFont(ctx, s, family, weight);
+  while (s > min && ctx.measureText(text).width > maxW) { s -= 2; setFont(ctx, s, family, weight); }
+  return s;
+}
+// Shrink to fit one line; if that would get too small, wrap onto two lines.
+function fitLines(ctx, text, size, min, maxW, family) {
+  const s = fitSize(ctx, text, size, min, maxW, family);
+  if (ctx.measureText(text).width <= maxW) return { size: s, lines: [text] };
+  const words = text.split(/\s+/);
+  let best = null;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(" "), b = words.slice(i).join(" ");
+    setFont(ctx, 100, family);
+    const wmax = Math.max(ctx.measureText(a).width, ctx.measureText(b).width);
+    if (!best || wmax < best.w) best = { w: wmax, lines: [a, b] };
+  }
+  if (!best) return { size: min, lines: [text] };
+  const s2 = Math.max(min, Math.min(size, Math.floor(100 * maxW / best.w)));
+  setFont(ctx, s2, family);
+  return { size: s2, lines: best.lines };
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function drawText(ctx, text, x, y, size, family, color, alpha, dy, weight = "") {
+  ctx.save(); ctx.globalAlpha *= alpha; setFont(ctx, size, family, weight);
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.fillText(text, x, y + dy); ctx.restore();
+}
+
+// Full-bleed photo with a slow push-in, plus gradients so text reads on any photo.
+function drawPhoto(ctx, img, f, dir, total, T) {
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  const p = f / total, s = lerp(1.04, 1.14, p), pan = lerp(0, 24 * dir, p);
+  if (img) {
+    const k = Math.max(W / img.width, H / img.height);
+    const bw = img.width * k, bh = img.height * k;
+    ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(s, s); ctx.translate(-W / 2 + pan, -H / 2);
+    ctx.drawImage(img, (W - bw) / 2, (H - bh) / 2, bw, bh); ctx.restore();
+  } else {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, hexA(T.accent, 0.35)); g.addColorStop(1, hexA(T.bg, 1));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = hexA(T.text, 0.5); setFont(ctx, 46, DM, 500); ctx.textAlign = "center";
+    ctx.fillText("Add your photos", W / 2, 760); ctx.textAlign = "left";
+  }
+  const top = ctx.createLinearGradient(0, 0, 0, 300);
+  top.addColorStop(0, "rgba(0,0,0,0.28)"); top.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = top; ctx.fillRect(0, 0, W, 300);
+  const bot = ctx.createLinearGradient(0, H * 0.5, 0, H);
+  bot.addColorStop(0, hexA(T.bg, 0)); bot.addColorStop(0.55, hexA(T.bg, 0.62)); bot.addColorStop(1, hexA(T.bg, 0.9));
+  ctx.fillStyle = bot; ctx.fillRect(0, H * 0.5, W, H * 0.5);
+}
+
+function drawCover(ctx, f, d, T) {
+  const a = ease(f, 4), b = ease(f, 12), c = ease(f, 20);
+  let y = SAFE_BOTTOM;
+  if (d.price) {
+    ctx.save(); ctx.globalAlpha *= c;
+    const ps = fitSize(ctx, d.price, 104, 64, d.pricePer ? SAFE_W - 140 : SAFE_W, BEBAS);
+    ctx.fillStyle = T.text; ctx.textBaseline = "alphabetic";
+    ctx.fillText(d.price, SAFE_L, y + (1 - c) * 20);
+    const pw = ctx.measureText(d.price).width;
+    if (d.pricePer) { setFont(ctx, 36, DM, 500); ctx.fillStyle = T.accent; ctx.fillText(d.pricePer, SAFE_L + pw + 14, y + (1 - c) * 20); }
+    ctx.restore();
+    y -= ps * 0.9 + 18;
+  }
+  const area = d.building && d.area ? d.area : "";
+  if (area) {
+    const as = fitSize(ctx, area, 62, 38, SAFE_W, BEBAS);
+    drawText(ctx, area, SAFE_L, y, as, BEBAS, T.accent, b, (1 - b) * 22);
+    y -= as * 0.95 + 4;
+  }
+  const name = (d.building || d.area || "Your listing").toUpperCase();
+  const fl = fitLines(ctx, name, 140, 84, SAFE_W, BEBAS);
+  for (let i = fl.lines.length - 1; i >= 0; i--) {
+    drawText(ctx, fl.lines[i], SAFE_L, y, fl.size, BEBAS, T.text, a, (1 - a) * 30);
+    y -= fl.size * 0.9;
+  }
+  const eyebrow = [d.status, d.type].filter(Boolean).join("  ·  ").toUpperCase();
+  if (eyebrow) {
+    ctx.save(); ctx.globalAlpha *= a; setFont(ctx, 32, DM, 700); spacing(ctx, 4);
+    ctx.fillStyle = T.accent; ctx.textBaseline = "alphabetic"; ctx.fillText(eyebrow, SAFE_L, y - 14 + (1 - a) * 30);
+    spacing(ctx, 0); ctx.restore();
+  }
+}
+function drawStats(ctx, f, d, T) {
+  const items = [];
+  if (d.beds) items.push(/studio/i.test(d.beds) ? { n: "Studio", l: "TYPE" } : { n: d.beds, l: d.beds === "1" ? "BED" : "BEDS" });
+  else if (d.type) items.push({ n: d.type, l: "TYPE" });
+  if (d.baths) items.push({ n: d.baths, l: d.baths === "1" ? "BATH" : "BATHS" });
+  if (d.sqft) items.push({ n: d.sqft, l: "SQ FT" });
+  if (!items.length) return;
+  const colW = SAFE_W / items.length;
+  items.forEach((it, i) => {
+    const s = ease(f, 4 + i * 6), cx = SAFE_L + colW * i + colW / 2, dy = (1 - s) * 26;
+    const ns = fitSize(ctx, it.n, it.n.length > 4 ? 110 : 160, 60, colW - 16, BEBAS);
+    ctx.save(); ctx.globalAlpha *= s; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = T.accent; setFont(ctx, ns, BEBAS); ctx.fillText(it.n, cx, SAFE_BOTTOM - 56 + dy);
+    ctx.fillStyle = T.text; setFont(ctx, 32, DM, 700); spacing(ctx, 3); ctx.fillText(it.l, cx, SAFE_BOTTOM + dy);
+    spacing(ctx, 0); ctx.restore();
+  });
+}
+function drawCaption(ctx, f, T, text) {
+  const a = ease(f, 4);
+  const fl = fitLines(ctx, text.toUpperCase(), 120, 76, SAFE_W, BEBAS);
+  let y = SAFE_BOTTOM;
+  for (let i = fl.lines.length - 1; i >= 0; i--) {
+    drawText(ctx, fl.lines[i], SAFE_L, y, fl.size, BEBAS, T.text, a, (1 - a) * 28);
+    y -= fl.size * 0.92;
+  }
+  ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = T.accent;
+  ctx.fillRect(SAFE_L, y - 12 + (1 - a) * 28, 90, 8); ctx.restore();
+}
+// Small reminder of what the listing is, on photos without a caption.
+function drawInfo(ctx, f, d, T) {
+  const a = ease(f, 6);
+  const name = [d.building, d.area].filter(Boolean).join(" · ").toUpperCase();
+  const price = d.price ? `${d.price}${d.pricePer ? " " + d.pricePer : ""}` : "";
+  if (!name && !price) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.textBaseline = "alphabetic";
+  const dy = (1 - a) * 16;
+  if (price) { fitSize(ctx, price, 40, 28, SAFE_W, DM, 700); ctx.fillStyle = T.accent; ctx.fillText(price, SAFE_L, SAFE_BOTTOM + dy); }
+  if (name) { fitSize(ctx, name, 34, 24, SAFE_W, DM, 700); spacing(ctx, 3); ctx.fillStyle = T.text; ctx.fillText(name, SAFE_L, SAFE_BOTTOM - (price ? 54 : 0) + dy); spacing(ctx, 0); }
+  ctx.restore();
+}
+function drawFeatures(ctx, f, d, T, img, total) {
+  // Same full-screen photo treatment, dimmed so the list stays readable.
+  if (img) { drawPhoto(ctx, img, f, 1, total, T); ctx.fillStyle = hexA(T.bg, 0.74); ctx.fillRect(0, 0, W, H); }
+  else { ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H); }
+  const a = ease(f);
+  drawText(ctx, "WHAT'S INSIDE", SAFE_L, 300, 76, BEBAS, T.accent, a, (1 - a) * 20);
+  const n = d.features.length, fs = n > 6 ? 50 : 58, gap = n > 6 ? 118 : 136, startY = 400;
+  d.features.forEach((ft, i) => {
+    const s = ease(f, 8 + i * 6), dx = (1 - s) * -30, y = startY + i * gap;
+    ctx.save(); ctx.globalAlpha *= s;
+    roundRect(ctx, SAFE_L + dx, y + fs * 0.32, 22, 22, 6); ctx.fillStyle = T.accent; ctx.fill();
+    fitSize(ctx, ft, fs, 34, SAFE_W - 50, DM, 500);
+    ctx.fillStyle = T.text; ctx.textBaseline = "top"; ctx.fillText(ft, SAFE_L + 50 + dx, y);
+    ctx.restore();
+  });
+}
+function drawEnd(ctx, f, d, T) {
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  const a = ease(f), b = ease(f, 6), c = ease(f, 12);
+  const [l1, l2] = (d.cta || "BOOK YOUR|PRIVATE VIEWING").toUpperCase().split("|");
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  let y = 800;
+  ctx.globalAlpha = a;
+  fitSize(ctx, l1, 130, 70, 900, BEBAS); ctx.fillStyle = T.text; ctx.fillText(l1, W / 2, y + (1 - a) * 30);
+  if (l2) { y += 128; fitSize(ctx, l2, 130, 70, 900, BEBAS); ctx.fillStyle = T.accent; ctx.fillText(l2, W / 2, y + (1 - a) * 30); }
+  ctx.globalAlpha = b; y += 130;
+  if (d.agent) { fitSize(ctx, d.agent.toUpperCase(), 64, 40, 900, BEBAS); ctx.fillStyle = T.text; ctx.fillText(d.agent.toUpperCase(), W / 2, y); y += 56; }
+  if (d.agency) { fitSize(ctx, d.agency, 36, 24, 900, DM, 500); ctx.fillStyle = T.accent; ctx.fillText(d.agency, W / 2, y); y += 70; }
+  if (d.phone) {
+    ctx.globalAlpha = c; setFont(ctx, 44, DM, 600);
+    const tw = ctx.measureText(d.phone).width, pw = tw + 80, ph = 84;
+    roundRect(ctx, (W - pw) / 2, y, pw, ph, ph / 2); ctx.fillStyle = T.accent; ctx.fill();
+    ctx.fillStyle = T.bg; ctx.textBaseline = "middle"; ctx.fillText(d.phone, W / 2, y + ph / 2 + 2); ctx.textBaseline = "alphabetic";
+  }
+  if (d.credit) { ctx.globalAlpha = c; setFont(ctx, 26, DM, 500); ctx.fillStyle = hexA(T.text, 0.55); ctx.fillText(d.credit, W / 2, H - 260); }
+  ctx.restore();
+}
+
+function buildTimeline(d) {
+  const T = d.theme, per = Math.round(d.secs * FPS);
+  const usable = selected.filter((p) => p.state === "ok" && p.img);
+  const list = usable.length ? usable : [{ img: null }, { img: null }];
+  const scenes = list.map((p, i) => {
+    const dir = i % 2 ? -1 : 1, dur = i === 0 ? per + 15 : per;
+    return { dur, draw: (c, f) => {
+      drawPhoto(c, p.img, f, dir, dur, T);
+      if (i === 0) drawCover(c, f, d, T);
+      else if (i === 1) drawStats(c, f, d, T);
+      else if (p.caption && p.caption.trim()) drawCaption(c, f, T, p.caption.trim());
+      else drawInfo(c, f, d, T);
+    } };
+  });
+  if (d.features.length) {
+    const bgImg = usable.length ? usable[0].img : null; // the opening shot again, dimmed
+    const dur = Math.max(110, 50 + d.features.length * 14);
+    scenes.push({ dur, draw: (c, f) => drawFeatures(c, f, d, T, bgImg, dur) });
+  }
+  scenes.push({ dur: 75, draw: (c, f) => drawEnd(c, f, d, T) });
+  let t = 0;
+  scenes.forEach((s, i) => { s.start = t; t += s.dur - (i < scenes.length - 1 ? FADE : 0); });
+  return { scenes, total: t };
+}
+function renderFrame(ctx, tl, frame, scale = 1) {
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.globalAlpha = 1;
+  const live = tl.scenes.filter((s) => frame >= s.start && frame < s.start + s.dur);
+  if (!live.length) live.push(tl.scenes[tl.scenes.length - 1]);
+  live.forEach((s, i) => {
+    ctx.save();
+    ctx.globalAlpha = i === 0 ? 1 : Math.min(1, (frame - s.start) / FADE);
+    s.draw(ctx, Math.min(frame - s.start, s.dur - 1));
+    ctx.restore();
+  });
+}
+
+/* ------------------------------ preview player ------------------------------ */
+const view = $("view"), vctx = view.getContext("2d");
+const PREVIEW_SCALE = view.width / W;
+let tl = null, frame = 0, playing = false, lastTs = 0, acc = 0;
+function refresh() {
+  tl = buildTimeline(data());
+  $("scrub").max = tl.total - 1;
+  if (frame >= tl.total) frame = 0;
+  $("length").value = `${(tl.total / FPS).toFixed(1)} seconds`;
+  if (!recording) draw();
+}
+function draw() {
+  if (!tl) return;
+  renderFrame(vctx, tl, frame, PREVIEW_SCALE);
+  $("scrub").value = frame;
+  $("time").textContent = `${(frame / FPS).toFixed(1)} / ${(tl.total / FPS).toFixed(1)}s`;
+}
+function loop(ts) {
+  if (!playing) return;
+  if (lastTs) acc += ts - lastTs;
+  lastTs = ts;
+  const n = Math.floor(acc / (1000 / FPS));
+  if (n > 0) { acc -= n * (1000 / FPS); frame += n; if (frame >= tl.total) frame = 0; draw(); }
+  requestAnimationFrame(loop);
+}
+function setPlaying(on) {
+  playing = on && !recording; $("playBtn").textContent = playing ? "Pause" : "Play";
+  lastTs = 0; acc = 0; if (playing) requestAnimationFrame(loop);
+}
+$("playBtn").onclick = () => setPlaying(!playing);
+$("scrub").oninput = (e) => { setPlaying(false); frame = +e.target.value; draw(); };
+
+/* ------------------------------ make video ------------------------------ */
+let recording = false, lastExport = null;
+function pickMime() {
+  if (typeof MediaRecorder === "undefined" || !HTMLCanvasElement.prototype.captureStream) return null;
+  const opts = ["video/mp4;codecs=avc1.640028", "video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+  return opts.find((m) => MediaRecorder.isTypeSupported(m)) || null;
+}
+async function exportVideo() {
+  if (recording) return;
+  const mime = pickMime();
+  if (!mime) { $("status").textContent = "This browser can't record video. Use Chrome, Edge or Safari (iOS 15 or newer)."; return; }
+  if (selected.some((p) => p.state === "loading")) { $("status").textContent = "Photos are still loading. Try again in a moment."; return; }
+  setPlaying(false);
+  recording = true;
+  $("makeBtn").disabled = true; $("makeBtn").innerHTML = '<span class="spinner"></span>Making video…';
+  $("result").classList.remove("show");
+  let wake = null;
+  try { wake = await navigator.wakeLock?.request("screen"); } catch {}
+
+  const d = data(), timeline = buildTimeline(d);
+  const off = document.createElement("canvas"); off.width = W; off.height = H;
+  const octx = off.getContext("2d");
+  renderFrame(octx, timeline, 0);
+  const stream = off.captureStream(FPS);
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 10_000_000 });
+  const chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  const done = new Promise((r) => (rec.onstop = r));
+  $("prog").style.display = "block";
+  $("status").textContent = "Making your video… keep this screen open.";
+  rec.start(250);
+
+  let hidden = false;
+  const onVis = () => { if (document.hidden) hidden = true; };
+  document.addEventListener("visibilitychange", onVis);
+  const t0 = performance.now();
+  await new Promise((resolve) => {
+    const tick = () => {
+      const f = Math.floor(((performance.now() - t0) / 1000) * FPS);
+      if (f >= timeline.total) { renderFrame(octx, timeline, timeline.total - 1); return resolve(); }
+      renderFrame(octx, timeline, f);
+      renderFrame(vctx, timeline, f, PREVIEW_SCALE);
+      $("prog").firstElementChild.style.width = (100 * f / timeline.total).toFixed(1) + "%";
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await new Promise((r) => setTimeout(r, 300));
+  rec.stop(); await done;
+  stream.getTracks().forEach((t) => t.stop());
+  document.removeEventListener("visibilitychange", onVis);
+  try { await wake?.release(); } catch {}
+
+  const ext = mime.startsWith("video/mp4") ? "mp4" : "webm";
+  const blob = new Blob(chunks, { type: `video/${ext}` });
+  const slug = (d.building || d.area || "listing").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  lastExport = { blob, url: URL.createObjectURL(blob), name: `propreel-${slug}.${ext}` };
+  $("prog").style.display = "none"; $("prog").firstElementChild.style.width = "0";
+  $("status").textContent = hidden
+    ? "Done, but the screen was switched away while recording, so parts may be choppy. Make it again with this screen open."
+    : `Your video is ready: ${(blob.size / 1e6).toFixed(1)} MB ${ext.toUpperCase()}.`;
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([blob], lastExport.name, { type: blob.type })] }));
+  $("shareBtn").hidden = !canShare;
+  $("dlBtn").classList.toggle("alt", canShare);
+  $("result").classList.add("show");
+  recording = false;
+  $("makeBtn").disabled = false; $("makeBtn").textContent = "Make video";
+  frame = 0; draw();
+}
+async function downloadFile() {
+  if (!lastExport) return;
+  const { blob, url, name } = lastExport;
+  // Inside a Claude artifact plain downloads are blocked; use its downloads capability.
+  if (window.claude && typeof window.claude.use === "function") {
+    try { const dl = await window.claude.use("downloads"); if (dl) { await dl.save({ filename: name, data: blob }); return; } }
+    catch (err) { if (err && err.code === "declined") return; }
+  }
+  const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+$("dlBtn").onclick = downloadFile;
+$("shareBtn").onclick = async () => {
+  if (!lastExport) return;
+  const file = new File([lastExport.blob], lastExport.name, { type: lastExport.blob.type });
+  try { await navigator.share({ files: [file], title: "Listing video" }); }
+  catch (err) { if (err && err.name !== "AbortError") downloadFile(); }
+};
+
+/* ------------------------------ wiring + draft ------------------------------ */
+FIELD_IDS.forEach((k) => {
+  const on = () => { setNeedsCheck(k, false); refresh(); saveDraft(); };
+  $(k).addEventListener("input", on); $(k).addEventListener("change", on);
+});
+["credit", "secs"].forEach((k) => { $(k).addEventListener("input", () => { refresh(); saveDraft(); }); $(k).addEventListener("change", refresh); });
+addEventListener("resize", fitCanvas);
+
+const DRAFT_KEY = "propreel:draft:v1";
+function saveDraft() {
+  try {
+    const v = {}; FIELD_IDS.concat(["credit", "secs", "cBg", "cAccent", "cText"]).forEach((k) => (v[k] = $(k).value));
+    v.theme = themeName;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(v));
+  } catch {}
+}
+function loadDraft() {
+  try {
+    const v = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+    if (!v) return false;
+    Object.keys(v).forEach((k) => {
+      const el = $(k);
+      if (!el || typeof v[k] !== "string") return;
+      if (k === "status" && !v[k]) return;
+      // a saved value that isn't one of a dropdown's options would leave it blank
+      if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === v[k])) return;
+      el.value = v[k];
+    });
+    themeName = v.theme || themeName;
+    if (THEMES[themeName] && !/^#[0-9a-f]{6}$/i.test(v.cBg || "")) applyTheme(themeName);
+    return true;
+  } catch { return false; }
+}
+
+/* ------------------------------ boot ------------------------------ */
+// Restore the last session's details before anything saves over them.
+if (!loadDraft()) applyTheme("midnight");
+renderThemes();
+renderSelected();
+importFromHash();
+addEventListener("hashchange", importFromHash);
+document.fonts?.ready.then(refresh);
+Promise.all([document.fonts.load('40px "Bebas Neue"'), document.fonts.load('500 40px "DM Sans"')]).then(refresh).catch(() => {});
+refresh();
+fitCanvas();
+if (window.ResizeObserver) {
+  new ResizeObserver(fitCanvas).observe(document.querySelector(".canvas-wrap"));
+  new ResizeObserver(() => document.documentElement.style.setProperty("--hdr", $("hdr").offsetHeight + "px")).observe($("hdr"));
+}
+</script>
+</body>
+</html>
